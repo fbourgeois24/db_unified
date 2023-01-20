@@ -1,18 +1,11 @@
-import psycopg2
-import psycopg2.extras
-import platform
 from pythonping import ping
 import logging as log
-import mariadb
-import mysql.connector
-import pyodbc
-
 
 
 class db_unified:
 	""" Classe pour la gestion de la DB """
 
-	def __init__(self, db_name=None, db_server=None, db_type = None, db_port=None, db_user=None, db_password = None, sslmode=None, options = None, config=None):
+	def __init__(self, db_type = None, db_name=None, db_server=None, db_port=None, db_user=None, db_password = None, sslmode=None, options = None, config=None):
 		""" db_type : type de db, valeurs possibles : 
 				- postgresql
 				- mariadb
@@ -34,11 +27,30 @@ class db_unified:
 
 		"""
 		# On vérifie que le type de db a été spécifié (en paramètre ou dans la config)
-		if self.db_type is None and (config is not None and config.get("type") is None):
+		if db_type is None and (config is not None and config.get("type") is None):
 			raise ValueError("Le type de base de données utilisé n'a pas été spécifié (paramètre 'db_type')")
 
 		# On sauve le type de db
 		self.db_type = db_type if db_type is not None else config.get("type")
+
+		# Import des bibliothèques en fonction du type de db choisi
+		if self.db_type == 'postgresql':
+			global psycopg2
+			import psycopg2
+			import psycopg2.extras
+			global platform
+			import platform
+		elif self.db_type == 'mariadb':
+			global mariadb
+			import mariadb
+		elif self.db_type == 'mysql':
+			global mysql
+			import mysql.connector
+		elif self.db_type == 'sqlserver':
+			global pyodbc
+			import pyodbc
+			global struct
+			import struct
 
 		# Attribution des valeurs par défaut en fonction du type de db
 		if self.db_type == "postgresql":
@@ -123,29 +135,28 @@ class db_unified:
 		""" Méthode pour créer un curseur """
 		if auto_connect:
 			self.connect()
-		# On essaye de fermer le curseur avant d'en recréer un 
+		# On essaye de fermer le curseur avant d'en recréer un pour si il existe déjà
 		try:
 			self.cursor.close()
 		except:
 			pass
 
-		if fetch_type in ('tuple', 'list'):
-			self.cursor = self.db.cursor()
-		elif fetch_type in ('dict', 'dict_name'):
+		# Si fetch_type incorrect
+		if fetch_type not in ('tuple', 'list', 'dict', 'dict_name'): raise ValueError("Incorrect fetch_type")
+		# Si postgresql on spécifie un paramètre pour récupérer les titres des colonnes
+		if self.db_type == 'postgresql' and fetch_type in ('dict', 'dict_name'):
 			self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 		else:
-			raise ValueError("Incorrect fetch_type")
-
+			self.cursor = self.db.cursor()
+		# Résultat de la création du curseur
 		if self.cursor is not None:
 			return True
 		else:
 			return False
 
-
 	def commit(self):
 		""" Méthode qui met à jour la db """
 		self.db.commit()
-
 
 	def close(self, commit = False, auto_connect=True):
 		""" Méthode pour détruire le curseur, avec ou sans commit """
@@ -156,20 +167,18 @@ class db_unified:
 		if auto_connect:
 			self.disconnect()
 		
-
-
 	def execute(self, query, params = None):
 		""" Méthode pour exécuter une requête mais qui gère les drop de curseurs """
 		self.cursor.execute(query, params)
 
-
 	def exec(self, query, params = None, fetch = "all", auto_connect=True, fetch_type='tuple'):
 		""" Méthode pour exécuter une requête et qui ouvre et ferme  la db automatiquement """
 		# Détermination du commit
-		if not "SELECT" in query.upper()[:20]:
+		if (not "SELECT" in query.upper()[:20]) and (not "SHOW" in query.upper()[:20]) and (not "RETURNING" in query.upper()):
 			commit = True
 		else:
 			commit = False
+		# Ouverture de l'accès à la db
 		if self.open(auto_connect=auto_connect, fetch_type=fetch_type):
 			self.execute(query, params)
 			# Si pas de commit ce sera une récupération
@@ -183,17 +192,21 @@ class db_unified:
 				if fetch == "all":
 					value = self.fetchall()
 					if fetch_title:
-						value = self.extract_title(value, 'all')
+						value = self.extract_title(value, fetch)
 				elif fetch == "one":
 					value = self.fetchone()
 					if fetch_title:
-						value = self.extract_title(value, 'one')
+						value = self.extract_title(value, fetch)
+					# On vide le curseur pour éviter l'erreur de data restantes à la fermeture
+					trash = self.fetchall()
 				elif fetch == "single":
 					value = self.fetchone()
 					if fetch_title:
-						value = self.extract_title(value, 'single')
+						value = self.extract_title(value, fetch)
 					elif value is not None:
 						value = value[0]
+					# On vide le curseur pour éviter l'erreur de data restantes à la fermeture
+					trash = self.fetchall()
 				elif fetch == 'list':
 					# On renvoie une liste composée du premier élément de chaque ligne
 					value = [item[0] for item in self.fetchall()]
@@ -212,24 +225,17 @@ class db_unified:
 		else:
 			raise AttributeError("Erreur de création du curseur pour l'accès à la db")
 
-
 	def fetchall(self):
 		""" Méthode pour le fetchall """
-
 		return self.cursor.fetchall()
-
 
 	def fetchone(self):
 		""" Méthode pour le fetchone """
-
 		return self.cursor.fetchone()
-
 
 	def dateToPostgres(self, date):
 		""" Méthode pour convertir une date au format JJ/MM/AAAA au format AAAA-MM-JJ pour l'envoyer dans la db """
-		# print(date.split("/"))
 		return str(date.split("/")[2]) + "-" + str(date.split("/")[1] + "-" + str(date.split("/")[0]))
-
 
 	def replace_none_list(self, liste):
 		""" Remplacer les None contenus dans la liste par une string vide """
@@ -253,22 +259,23 @@ class db_unified:
 		""" On extrait les titres du résultat et on renvoie le bon type de donnée en fonction du fetch 
 			on renvoie une liste dont le premier élément sera une liste avec les titres des colonnes
 			et le 2e élément sera une liste avec les données
-		"""
-		result = []
 
-		if fetch == "all":
-			# Si pas de données renvoyées
-			if value != []:
-				result.append(value[0].keys())
-				result.append(self.replace_none_list([list(row.values()) for row in value]))
-			else:
-				result = value
-		elif fetch == "one":
-			result.append(value.keys())
-			result.append(self.replace_none_list(list(value.values())))
-		elif fetch == "single":
-			result.append(list(value.keys())[0])
-			result.append(self.replace_none_list(list(value.values()))[0])
+			postgresql renvoie une liste de dictionnaires
+		"""
+		
+		# Si aucune donnée, on renvoie une liste vide
+		if value == []: return []
+
+		if self.db_type == 'postgresql':
+			if fetch == 'all':
+				result = [value[0].keys(), self.replace_none_list([list(row.values()) for row in value])]
+			elif fetch == "one":
+				result = [value.keys(), self.replace_none_list(list(value.values()))]
+			elif fetch == "single":
+				result = [list(value.keys())[0], self.replace_none_list(list(value.values()))[0]]
+		
+		elif self.db_type in ('mysql', 'mariadb'):
+			result = [[i[0] for i in self.cursor.description], self.replace_none_list([row for row in value])]
 
 		return result
 
@@ -281,9 +288,8 @@ class db_unified:
 		""" Fermeture avec with """
 		self.disconnect()
 
-
-
-
-
-
-
+	def handle_datetimeoffset(dto_value):
+	    # ref: https://github.com/mkleehammer/pyodbc/issues/134#issuecomment-281739794
+	    tup = struct.unpack("<6hI2h", dto_value)  # e.g., (2017, 3, 16, 10, 35, 18, 0, -6, 0)
+	    tweaked = [tup[i] // 100 if i == 6 else tup[i] for i in range(len(tup))]
+	    return "{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}.{:07d} {:+03d}:{:02d}".format(*tweaked)
