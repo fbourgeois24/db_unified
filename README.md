@@ -7,3 +7,9 @@ Bases de données actuellement supportées
 - mysql
 - mariadb
 - sql server
+
+## Installation
+Installez les dépendances avec pip install -r requirements.txt
+
+ATTENTION, pour mariadb certaines dépendances supplémentaires sont nécessaires. 
+Vous pouvez les installer avec `sudo apt-get install libmariadb3 libmariadb-dev`
