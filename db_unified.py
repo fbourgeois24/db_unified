@@ -26,6 +26,15 @@ class db_unified:
 
 
 		"""
+
+		self.database = None
+		self.host = None
+		self.port = None
+		self.user = None
+		self.password = None
+		self.sslmode = None
+		self.options = None
+
 		# On vérifie que le type de db a été spécifié (en paramètre ou dans la config)
 		if db_type is None and (config is not None and config.get("type") is None):
 			raise ValueError("Le type de base de données utilisé n'a pas été spécifié (paramètre 'db_type')")
@@ -95,7 +104,7 @@ class db_unified:
 		if self.host is None: raise ValueError("L'adresse de la base de données n'a pas été spécifiée")
 		if self.port is None: raise ValueError("Le port de la base de données n'a pas été spécifié")
 		if self.user is None: raise ValueError("L'utilisateur de la base de données n'a pas été spécifié")
-		if self.password is None: raise ValueError("Le mot de passe de la base de données n'a pas été spécifié")
+		if self.password is None: self.passwd = ""
 		if self.sslmode is None: raise ValueError("Le mode de ssl de la base de données n'a pas été spécifié")
 		if self.options is None: raise ValueError("Les options de la base de données n'ont pas été spécifiées")
 
