@@ -63,16 +63,16 @@ class db_unified:
 
 		# Attribution des valeurs par défaut en fonction du type de db
 		if self.db_type == "postgresql":
-			self.port = "5432"
+			self.port = 5432
 			self.user = "postgres"
 			self.sslmode = "allow"
 			self.options = ""
 		elif self.db_type == "mariadb":
-			self.port = "3306"
+			self.port = 3306
 			self.sslmode = "allow"
 			self.options = ""
 		elif self.db_type == "mysql":
-			self.port = "3306"
+			self.port = 3306
 			self.sslmode = "allow"
 			self.options = ""
 		elif self.db_type == "sqlserver":
@@ -143,7 +143,7 @@ class db_unified:
 	def open(self, auto_connect=True, fetch_type='tuple'):
 		""" Méthode pour créer un curseur """
 		if auto_connect:
-			self.connect()
+			if not self.connect(): return False
 		# On essaye de fermer le curseur avant d'en recréer un pour si il existe déjà
 		try:
 			self.cursor.close()
@@ -241,10 +241,6 @@ class db_unified:
 	def fetchone(self):
 		""" Méthode pour le fetchone """
 		return self.cursor.fetchone()
-
-	def dateToPostgres(self, date):
-		""" Méthode pour convertir une date au format JJ/MM/AAAA au format AAAA-MM-JJ pour l'envoyer dans la db """
-		return str(date.split("/")[2]) + "-" + str(date.split("/")[1] + "-" + str(date.split("/")[0]))
 
 	def replace_none_list(self, liste):
 		""" Remplacer les None contenus dans la liste par une string vide """
