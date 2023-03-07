@@ -51,7 +51,7 @@ class db_unified:
 			import platform
 		elif self.db_type == 'mariadb':
 			global mariadb
-			import mariadb
+			import mariadb # Installer avec 'pip install mariadb'. Il y aura peut-�tre besoin de certaines d�pendances 'sudo apt-get install libmariadb3 libmariadb-dev'
 		elif self.db_type == 'mysql':
 			global mysql
 			import mysql.connector
@@ -221,7 +221,7 @@ class db_unified:
 					value = [item[0] for item in self.fetchall()]
 				else:
 					raise ValueError("Wrong fetch type")
-				self.close(auto_connect=auto_connect)
+				self.close(auto_connect=auto_connect, commit=commit)
 				# Si fetch_type == 'list' on transforme le tuple en liste
 				if fetch_type == "list":
 					if fetch == "all":
@@ -230,7 +230,7 @@ class db_unified:
 						value = list(value)
 				return value
 			else:
-				self.close(commit=commit)
+				self.close(auto_connect=auto_connect, commit=commit)
 		else:
 			raise AttributeError("Erreur de création du curseur pour l'accès à la db")
 
