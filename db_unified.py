@@ -179,9 +179,29 @@ class db_unified:
 	def execute(self, query, params = None):
 		""" Méthode pour exécuter une requête mais qui gère les drop de curseurs """
 		self.cursor.execute(query, params)
+		
+	def executemany(self, query, params = None):
+		""" Méthode pour exécuter une requête mais qui gère les drop de curseurs """
+		self.cursor.executemany(query, params)
 
-	def exec(self, query, params = None, fetch = "all", auto_connect=True, fetch_type='tuple'):
-		""" Méthode pour exécuter une requête et qui ouvre et ferme  la db automatiquement """
+	def exec(self, query, params = None, fetch = "all", auto_connect=True, fetch_type='tuple', insert_many=False):
+		""" Méthode pour exécuter une requête et qui ouvre et ferme  la db automatiquement 
+			fetch : quantité de renvoi des données
+				valeurs possibles:
+				- all (tout)
+				- one (la première ligne)
+				- single (le premier élément de la première ligne)
+				- list (une liste avec le premier élément de chaque ligne)
+			fetch_type : format de renvoi des données
+				valeurs possibles:
+				- tuple
+				- list
+				- dict_name (renvoie une liste à deux éléments, le premier est la liste des titres et le 2e est la liste des données)
+			insert_many : ajout de plusieurs lignes dans la db
+				valeurs possibles : vrai ou faux
+				si vrai, il faut passer un tuple à deux niveaux
+				Il doit y avoir autant de %s dans la requête (VALUES) que le nombre de colonnes à insérer
+		"""
 		# Détermination du commit
 		if (not "SELECT" in query.upper()[:20]) and (not "SHOW" in query.upper()[:20]) and (not "RETURNING" in query.upper()):
 			commit = True
@@ -189,7 +209,10 @@ class db_unified:
 			commit = False
 		# Ouverture de l'accès à la db
 		if self.open(auto_connect=auto_connect, fetch_type=fetch_type):
-			self.execute(query, params)
+			if insert_many and self.db_type == "postgresql":
+				self.executemany(query, params)
+			else:
+				self.execute(query, params)
 			# Si pas de commit ce sera une récupération
 			if not commit:	
 				# S'il faut récupérer les titres
