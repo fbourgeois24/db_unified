@@ -151,7 +151,11 @@ class db_unified:
 			pass
 
 		# Si fetch_type incorrect
-		if fetch_type not in ('tuple', 'list', 'dict', 'with_names'): raise ValueError("Incorrect fetch_type")
+		if fetch_type == "dict_name":
+			# Compatibilité suite au changement du nom de fetch_type
+			fetch_type = "with_names"
+		if fetch_type not in ('tuple', 'list', 'dict', 'with_names'): 
+			raise ValueError("Incorrect fetch_type")
 		# Si postgresql on spécifie un paramètre pour récupérer les titres des colonnes
 		if self.db_type == 'postgresql' and fetch_type in ('dict', 'with_names'):
 			self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
