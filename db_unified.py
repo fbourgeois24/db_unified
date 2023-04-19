@@ -249,7 +249,7 @@ class db_unified:
 				if fetch_type == "list":
 					if fetch == "all":
 						value = [list(item) for item in value]
-					elif fetch in ("one", "single"):
+					elif fetch in ("one", "single") and value is not None:
 						value = list(value)
 				return value
 			else:
