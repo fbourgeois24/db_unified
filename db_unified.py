@@ -151,10 +151,12 @@ class db_unified:
 			pass
 
 		# Si fetch_type incorrect
-		if fetch_type not in ('tuple', 'list', 'dict', 'dict_name'): raise ValueError("Incorrect fetch_type")
+		if fetch_type not in ('tuple', 'list', 'dict', 'with_names'): raise ValueError("Incorrect fetch_type")
 		# Si postgresql on spécifie un paramètre pour récupérer les titres des colonnes
-		if self.db_type == 'postgresql' and fetch_type in ('dict', 'dict_name'):
+		if self.db_type == 'postgresql' and fetch_type in ('dict', 'with_names'):
 			self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+		if self.db_type in ('mysql', 'mariadb') and fetch_type == 'dict':
+			self.cursor = self.db.cursor(dictionary=True)
 		else:
 			self.cursor = self.db.cursor()
 		# Résultat de la création du curseur
@@ -196,7 +198,8 @@ class db_unified:
 				valeurs possibles:
 				- tuple
 				- list
-				- dict_name (renvoie une liste à deux éléments, le premier est la liste des titres et le 2e est la liste des données)
+				- dict (renvoie une liste de dictionnaires selon la structure {nom de la colonne: valeur})
+				- with_names (renvoie une liste à deux éléments, le premier est la liste des titres et le 2e est la liste des données)
 			insert_many : ajout de plusieurs lignes dans la db
 				valeurs possibles : vrai ou faux
 				si vrai, il faut passer un tuple à deux niveaux
@@ -216,7 +219,7 @@ class db_unified:
 			# Si pas de commit ce sera une récupération
 			if not commit:	
 				# S'il faut récupérer les titres
-				if fetch_type == "dict_name":
+				if fetch_type == "with_names":
 					fetch_title = True
 				else:
 					fetch_title = False
@@ -296,14 +299,15 @@ class db_unified:
 
 		if self.db_type == 'postgresql':
 			if fetch == 'all':
-				result = [value[0].keys(), self.replace_none_list([list(row.values()) for row in value])]
+				result = [list(value[0].keys()), self.replace_none_list([list(row.values()) for row in value])]
 			elif fetch == "one":
-				result = [value.keys(), self.replace_none_list(list(value.values()))]
+				result = [list(value.keys()), self.replace_none_list(list(value.values()))]
 			elif fetch == "single":
 				result = [list(value.keys())[0], self.replace_none_list(list(value.values()))[0]]
 		
 		elif self.db_type in ('mysql', 'mariadb'):
 			result = [[i[0] for i in self.cursor.description], self.replace_none_list([row for row in value])]
+
 
 		return result
 
