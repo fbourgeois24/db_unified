@@ -210,7 +210,7 @@ class db_unified:
 				Il doit y avoir autant de %s dans la requête (VALUES) que le nombre de colonnes à insérer
 		"""
 		# Détermination du commit
-		if (not "SELECT" in query.upper()[:20]) and (not "SHOW" in query.upper()[:20]) and (not "RETURNING" in query.upper()):
+		if not "SELECT" in query.upper()[:20] and not "SHOW" in query.upper()[:20]:
 			commit = True
 		else:
 			commit = False
@@ -221,7 +221,7 @@ class db_unified:
 			else:
 				self.execute(query, params)
 			# Si pas de commit ce sera une récupération
-			if not commit:	
+			if not commit or "RETURNING" in query.upper():	
 				# S'il faut récupérer les titres
 				if fetch_type == "with_names":
 					fetch_title = True
