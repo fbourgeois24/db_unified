@@ -1,7 +1,3 @@
-from pythonping import ping
-import logging as log
-
-
 class db_unified:
 	""" Classe pour la gestion de la DB """
 
@@ -116,8 +112,6 @@ class db_unified:
 		""" Méthode pour se connecter à la base de données
 			On commence par pinguer la db
 		"""
-		if "Request timed out" in ping(self.host, count=1):
-			return False
 		# Si le ping est passé on essaie de se connecter à la db
 		if self.db_type == "postgresql":
 			self.db = psycopg2.connect(host = self.host, port = self.port, database = self.database, user = self.user, password = self.password, sslmode = self.sslmode, options = self.options)
