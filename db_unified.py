@@ -210,7 +210,7 @@ class db_unified:
 			commit = False
 		# Ouverture de l'accès à la db
 		if self.open(auto_connect=auto_connect, fetch_type=fetch_type):
-			if insert_many and self.db_type == "postgresql":
+			if insert_many and self.db_type in ("postgresql", "mariadb"):
 				self.executemany(query, params)
 			else:
 				self.execute(query, params)
