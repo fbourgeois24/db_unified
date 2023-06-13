@@ -153,7 +153,7 @@ class db_unified:
 		# Si postgresql on spécifie un paramètre pour récupérer les titres des colonnes
 		if self.db_type == 'postgresql' and fetch_type in ('dict', 'with_names'):
 			self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-		if self.db_type in ('mysql', 'mariadb') and fetch_type == 'dict':
+		elif self.db_type in ('mysql', 'mariadb') and fetch_type == 'dict':
 			self.cursor = self.db.cursor(dictionary=True)
 		else:
 			self.cursor = self.db.cursor()
