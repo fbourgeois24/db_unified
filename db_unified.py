@@ -144,10 +144,6 @@ class db_unified:
 		except:
 			pass
 
-		# Si fetch_type incorrect
-		if fetch_type == "dict_name":
-			# Compatibilité suite au changement du nom de fetch_type
-			fetch_type = "with_names"
 		if fetch_type not in ('tuple', 'list', 'dict', 'with_names'): 
 			raise ValueError("Incorrect fetch_type")
 		# Si postgresql on spécifie un paramètre pour récupérer les titres des colonnes
@@ -203,6 +199,10 @@ class db_unified:
 				si vrai, il faut passer un tuple à deux niveaux
 				Il doit y avoir autant de %s dans la requête (VALUES) que le nombre de colonnes à insérer
 		"""
+		# Si fetch_type incorrect
+		if fetch_type == "dict_name":
+			# Compatibilité suite au changement du nom de fetch_type
+			fetch_type = "with_names"
 		# Détermination du commit
 		if not "SELECT" in query.upper()[:20] and not "SHOW" in query.upper()[:20]:
 			commit = True
