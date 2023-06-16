@@ -7,6 +7,7 @@ class db_unified:
 				- mariadb
 				- mysql
 				- sqlserver
+				- sqlite
 
 			sslmode | valeurs possibles: disable, allow, prefer, require, verify-ca, verify-full 
 			options peut servir à chercher dans un schéma particulier : options="-c search_path=dbo,public")
@@ -56,6 +57,9 @@ class db_unified:
 			import pyodbc
 			global struct
 			import struct
+		elif self.db_type == 'sqlite':
+			global sqlite3
+			import sqlite3 # Installer avec 'pip install db-sqlite3'
 
 		# Attribution des valeurs par défaut en fonction du type de db
 		if self.db_type == "postgresql":
@@ -74,6 +78,13 @@ class db_unified:
 		elif self.db_type == "sqlserver":
 			self.port = ""
 			self.sslmode = "allow"
+			self.options = ""
+		elif self.db_type == "sqlite":
+			self.host = ""
+			self.port = ""
+			self.user = ""
+			self.password = ""
+			self.sslmode = ""
 			self.options = ""
 
 		# On récupère les éléments de la config s'ils existent
@@ -124,6 +135,8 @@ class db_unified:
 			driver = pyodbc.drivers()[0]
 			self.db = pyodbc.connect("DRIVER={" + driver + "};SERVER=" + self.host + "," + self.port + ";DATABASE=" + self.database + ";UID=" + self.user \
 				+ ";PWD=" + self.password + ";TrustServerCertificate=YES;" )
+		elif self.db_type == 'sqlite':
+			self.db = sqlite3.connect(self.database)
 
 		if self.db is None:
 			return False
@@ -151,6 +164,9 @@ class db_unified:
 			self.cursor = self.db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 		elif self.db_type in ('mysql', 'mariadb') and fetch_type == 'dict':
 			self.cursor = self.db.cursor(dictionary=True)
+		elif self.db_type == 'sqlite' and fetch_type in ('dict', 'with_names'):
+			self.db.row_factory = sqlite3.Row
+			self.cursor = self.db.cursor()
 		else:
 			self.cursor = self.db.cursor()
 		# Résultat de la création du curseur
@@ -174,10 +190,16 @@ class db_unified:
 		
 	def execute(self, query, params = None):
 		""" Méthode pour exécuter une requête mais qui gère les drop de curseurs """
+		if self.db_type == "sqlite":
+			query = query.replace("%s", "?")
+			if params is None: params = ()
 		self.cursor.execute(query, params)
 		
 	def executemany(self, query, params = None):
 		""" Méthode pour exécuter une requête mais qui gère les drop de curseurs """
+		if self.db_type == "sqlite":
+			query = query.replace("%s", "?")
+			if params is None: params = ()
 		self.cursor.executemany(query, params)
 
 	def exec(self, query, params = None, fetch = "all", auto_connect=True, fetch_type='tuple', insert_many=False):
