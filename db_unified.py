@@ -95,6 +95,10 @@ class db_unified:
 			self.user = config.get("user", self.user)
 			self.password = config.get("passwd", self.password)
 			self.sslmode = config.get("sslmode", self.sslmode)
+			self.ssl_ca = config.get("ssl_ca")
+			self.ssl_key = config.get("ssl_key")
+			self.ssl_cert = config.get("ssl_cert")
+			self.ssl_verify_cert = config.get("ssl_verify_cert")
 			self.options = config.get("options", self.options)
 
 		# On récupère les paramètres s'ils ont été spécifiés
@@ -125,9 +129,11 @@ class db_unified:
 		"""
 		# Si le ping est passé on essaie de se connecter à la db
 		if self.db_type == "postgresql":
-			self.db = psycopg2.connect(host = self.host, port = self.port, database = self.database, user = self.user, password = self.password, sslmode = self.sslmode, options = self.options)
+			self.db = psycopg2.connect(host=self.host, port=self.port, database=self.database, user=self.user, password=self.password, 
+				sslmode = self.sslmode, options = self.options)
 		elif self.db_type == "mariadb":
-			self.db = mariadb.connect(host = self.host, port = self.port, database = self.database, user = self.user, password = self.password)
+			self.db = mariadb.connect(host=self.host, port=self.port, database=self.database, user=self.user, password=self.password, 
+				ssl_key=self.ssl_key, ssl_cert=self.ssl_cert, ssl_verify_cert=self.ssl_verify_cert)
 		elif self.db_type == "mysql":
 			self.db = mysql.connector.connect(host = self.host, database = self.database, user = self.user, password = self.password)
 		elif self.db_type == "sqlserver":
