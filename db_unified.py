@@ -95,10 +95,9 @@ class db_unified:
 			self.user = config.get("user", self.user)
 			self.password = config.get("passwd", self.password)
 			self.sslmode = config.get("sslmode", self.sslmode)
-			self.ssl_ca = config.get("ssl_ca")
 			self.ssl_key = config.get("ssl_key")
 			self.ssl_cert = config.get("ssl_cert")
-			self.ssl_verify_cert = config.get("ssl_verify_cert")
+			self.ssl_verify_cert = config.get("ssl_verify_cert", False)
 			self.options = config.get("options", self.options)
 
 		# On récupère les paramètres s'ils ont été spécifiés
