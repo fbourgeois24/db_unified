@@ -1,3 +1,4 @@
+import logging as log
 class db_unified:
 	""" Classe pour la gestion de la DB """
 
@@ -198,7 +199,10 @@ class db_unified:
 		if self.db_type == "sqlite":
 			query = query.replace("%s", "?")
 			if params is None: params = ()
-		self.cursor.execute(query, params)
+		if params is None:
+			self.cursor.execute(query)
+		else:
+			self.cursor.execute(query, params)
 		
 	def executemany(self, query, params = None):
 		""" Méthode pour exécuter une requête mais qui gère les drop de curseurs """
