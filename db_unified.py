@@ -274,6 +274,9 @@ class db_unified:
 				elif fetch == 'list':
 					# On renvoie une liste composée du premier élément de chaque ligne
 					value = [item[0] for item in self.fetchall()]
+				elif fetch == None:
+					# Si pas de données à récupérer
+					value = None
 				else:
 					raise ValueError("Wrong fetch type")
 				self.close(auto_connect=auto_connect, commit=commit)
