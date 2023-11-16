@@ -44,6 +44,7 @@ class db_unified:
 		if self.db_type == 'postgresql':
 			global psycopg2
 			import psycopg2
+			self.psycopg2_errors = psycopg2.errors
 			import psycopg2.extras
 			global platform
 			import platform
